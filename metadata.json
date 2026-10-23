@@ -1,0 +1,6 @@
+{
+  "name": "NOVELFLIX - Монголын Цуврал Зохиолын Платформ",
+  "description": "Netflix загварын бүх төрлийн онлайн новел, цуврал роман унших болон зохиол оруулах, нийтлэх орчин үеийн платформ.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

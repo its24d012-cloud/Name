@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "Novel": {
+      "title": "Novel",
+      "description": "Represents a serialized novel or book publication",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "author": { "type": "string", "maxLength": 100 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "coverImage": { "type": "string", "maxLength": 500 },
+        "rating": { "type": "number" },
+        "ratingCount": { "type": "number" },
+        "views": { "type": "string", "maxLength": 50 },
+        "genre": { "type": "string", "maxLength": 50 },
+        "ageLimit": { "type": "string", "maxLength": 20 },
+        "status": { "type": "string", "maxLength": 50 },
+        "synopsis": { "type": "string", "maxLength": 3000 },
+        "chapters": { "type": "array" },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "title", "author", "authorId", "genre", "chapters"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 200 },
+        "photoURL": { "type": "string", "maxLength": 500 },
+        "vipPlan": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["uid", "displayName"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "Novel bookmarked in user library",
+      "type": "object",
+      "properties": {
+        "novelId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "coverImage": { "type": "string", "maxLength": 500 },
+        "addedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["novelId", "userId"]
+    }
+  },
+  "firestore": {
+    "/novels/{novelId}": {
+      "schema": "Novel",
+      "description": "Published novels available in the library"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile records"
+    },
+    "/users/{userId}/bookmarks/{novelId}": {
+      "schema": "Bookmark",
+      "description": "User personalized saved novels"
+    }
+  }
+}

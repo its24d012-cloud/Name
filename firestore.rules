@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidNovel(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.author is string && data.author.size() > 0 && data.author.size() <= 100
+        && data.authorId is string && data.authorId.size() <= 128
+        && data.genre is string && data.genre.size() <= 50
+        && data.chapters is list && data.chapters.size() <= 200
+        && (!('synopsis' in data) || (data.synopsis is string && data.synopsis.size() <= 3000))
+        && (!('coverImage' in data) || (data.coverImage is string && data.coverImage.size() <= 500))
+        && (!('views' in data) || (data.views is string && data.views.size() <= 50))
+        && (!('rating' in data) || (data.rating is number))
+        && (!('ratingCount' in data) || (data.ratingCount is number));
+    }
+
+    function isValidUserProfile(data) {
+      return data.uid is string && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() <= 100
+        && (!('email' in data) || (data.email is string && data.email.size() <= 200))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (!('vipPlan' in data) || (data.vipPlan is string && data.vipPlan.size() <= 50));
+    }
+
+    function isValidBookmark(data) {
+      return data.userId is string && data.userId == request.auth.uid
+        && data.novelId is string && data.novelId.size() <= 128
+        && (!('title' in data) || (data.title is string && data.title.size() <= 200))
+        && (!('coverImage' in data) || (data.coverImage is string && data.coverImage.size() <= 500));
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection testing endpoint
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    // Novels collection: Public read, authenticated creation & author updates
+    match /novels/{novelId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && isValidId(novelId)
+                    && isValidNovel(incoming())
+                    && (incoming().authorId == request.auth.uid || incoming().authorId == 'system');
+      allow update: if isSignedIn()
+                    && isValidId(novelId)
+                    && isValidNovel(incoming())
+                    && (existing().authorId == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['views', 'rating', 'ratingCount']));
+      allow delete: if isSignedIn()
+                    && isValidId(novelId)
+                    && existing().authorId == request.auth.uid;
+    }
+
+    // Users collection and subcollections (Bookmarks / Library)
+    match /users/{userId} {
+      allow read: if isOwner(userId) && isValidId(userId);
+      allow create, update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow delete: if false;
+
+      match /bookmarks/{novelId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(novelId) && isValidBookmark(incoming());
+      }
+    }
+  }
+}
